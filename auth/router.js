@@ -1,6 +1,6 @@
 const bcryptjs = require('bcryptjs');
 const router = require('express').Router();
-
+const jwt = require('jsonwebtoken');
 const Users = require('../users/users-model.js');
 const { isValid } = require('../users/user-service.js');
 
@@ -38,9 +38,11 @@ router.post('/login', (req, res) => {
 				if (user && bcryptjs.compareSync(password, user.password)) {
 					//compare the database hashed password and the user password
 					//we can save info about the client inside the session (req.session)
-					req.session.loggedIn = true;
-					req.session.user = user;
-					res.status(200).json({ message: 'You are logged in' });
+					// req.session.loggedIn = true;
+					// req.session.user = user;
+					const token = createToken(user);
+
+					res.status(200).json({ message: 'You are logged in', token });
 				} else {
 					res.status(401).json({ message: 'Invalid credentials' });
 				}
@@ -71,5 +73,21 @@ router.get('/logout', (req, res) => {
 		res.status(204).end();
 	}
 });
+
+function createToken(user) {
+	const payload = {
+		sub: user.id,
+		username: user.username,
+		role: user.role,
+	};
+
+	const secret = process.env.JWT_SECRET || 'keepitsecret,keepitsafe!';
+
+	const options = {
+		expiresIn: '1d',
+	};
+
+	return jwt.sign(payload, secret, options);
+}
 
 module.exports = router;
