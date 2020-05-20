@@ -38,11 +38,13 @@ router.post('/login', (req, res) => {
 				if (user && bcryptjs.compareSync(password, user.password)) {
 					//compare the database hashed password and the user password
 					//we can save info about the client inside the session (req.session)
-					// req.session.loggedIn = true;
-					// req.session.user = user;
-					const token = createToken(user);
+					req.session.loggedIn = true;
+					req.session.user = user;
+					const token = createToken(user); //generate token on login by passing in the user
 
-					res.status(200).json({ message: 'You are logged in', token });
+					res
+						.status(200)
+						.json({ message: 'You are logged in', token, data: user });
 				} else {
 					res.status(401).json({ message: 'Invalid credentials' });
 				}
@@ -74,6 +76,7 @@ router.get('/logout', (req, res) => {
 	}
 });
 
+//function to generate token
 function createToken(user) {
 	const payload = {
 		sub: user.id,
@@ -81,7 +84,7 @@ function createToken(user) {
 		role: user.role,
 	};
 
-	const secret = process.env.JWT_SECRET || 'keepitsecret,keepitsafe!';
+	const secret = process.env.JWT_SECRET || 'golfer';
 
 	const options = {
 		expiresIn: '1d',
